@@ -17,10 +17,12 @@ export class SmartVideo {
 
       httpServer.listen(this.port, () => {
             console.log('Running smartvideo-io on port %s', this.port);
-            let io = new Server(httpServer, {cors: {
-                origin: "https://smartvideo-ui-develop.aswdev.aareon.com",
-                methods: ["GET", "POST"]
-            }});
+          let io = new Server(httpServer, {
+              allowRequest: (req, callback) => {
+                  const noOriginHeader = req.headers.origin === undefined;
+                  callback(null, noOriginHeader);
+              }
+          });
             const subscriber = new SocketIoSubscriber();
             subscriber.subscribe(io);
         });
