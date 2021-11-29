@@ -1,0 +1,216 @@
+#######################################
+## GitLab-CI Execution configuration ##
+#######################################
+
+# Documentation: https://docs.gitlab.com/ee/ci/yaml/README.html
+
+## Initialization ##
+# List of the stages, sorted by order of execution.
+stages:
+  - prepare
+  - build
+  - deployment:dtr
+  - deployment:ccp
+
+# List of variables generics to this configuration.
+variables:
+  SERVICE_IMAGE_NAME: 'smartvideo-io'
+  STACK: 'smartvideo-io'
+  TAG: $CI_COMMIT_REF_SLUG
+  REPO_ENV: 'preprod'
+  ENVIRONMENT: 'dev'
+  PROXY: http://proxy.rz.aareon.com:80
+  LAST_JOB: 'build'
+  PROJECT_NAME: "smartvideo-io"
+  SERVICE_FAMILY: "asp"
+  TOOLKIT_PATH: "pipelines-toolkit"
+  DEFAULT_NETWORK: "asp_front_network"
+
+  ## Jobs ##
+
+prepare:clone:
+  stage: prepare
+  tags:
+    - dp-ccp-build-dil
+  script:
+    # Temporal branch tryout to test new toolkit features
+    - git clone -b develop git@git.rz.aareon.com:dp-it/pipelines-toolkit.git ${TOOLKIT_PATH}
+  rules:
+    - when: on_success
+  artifacts:
+    paths:
+      - ./pipelines-toolkit
+
+
+# Build job
+build_io:
+  stage: build
+  tags:
+    - dp-ccp-build-dil
+  before_script:
+    - mv config/docker/image/io/Dockerfile config/docker/image
+  script:
+    - if [ "${TAG}" == "develop" ]; then TAG="latest"; fi
+    - if [ "${TAG}" == "uat" ]; then TAG="uat" && ENVIRONMENT="test"; fi
+    - if [ "${TAG}" == "master" ]; then TAG="latest" && REPO_ENV="prod" && ENVIRONMENT="prod"; fi
+    - export CUSTOM_IMAGE_NAME="${SERVICE_IMAGE_NAME}"
+    - export CUSTOM_TAG="${TAG}"
+    - export EXTRA_BUILD_ARGS=""
+    - make -f ${TOOLKIT_PATH}/Makefile build PROJECT_NAME=${PROJECT_NAME}
+  artifacts:
+    paths:
+      - ./${TOOLKIT_PATH}/config.sh
+  rules:
+    - when: on_success
+
+build_http:
+  stage: build
+  tags:
+    - dp-ccp-build-dil
+  before_script:
+    - mv config/docker/image/http/* config/docker/image
+  script:
+    - if [ "${TAG}" == "develop" ]; then TAG="latest"; fi
+    - if [ "${TAG}" == "uat" ]; then TAG="uat" && ENVIRONMENT="test"; fi
+    - if [ "${TAG}" == "master" ]; then TAG="latest" && REPO_ENV="prod" && ENVIRONMENT="prod"; fi
+    - export CUSTOM_IMAGE_NAME="${SERVICE_IMAGE_NAME}"
+    - export CUSTOM_TAG="nginx"
+    - export EXTRA_BUILD_ARGS=""
+    - make -f ${TOOLKIT_PATH}/Makefile build PROJECT_NAME=${PROJECT_NAME}
+  artifacts:
+    paths:
+      - ./${TOOLKIT_PATH}/config.sh
+  rules:
+    - when: on_success
+
+
+.deploy_dtr: &deploy_dtr
+  stage: deployment:dtr
+  before_script: [ ]
+  script:
+    - if [ "${TAG}" == "develop" ]; then TAG="latest"; fi
+    - if [ "${TAG}" == "uat" ]; then TAG="uat" && ENVIRONMENT="test"; fi
+    - if [ "${TAG}" == "master" ]; then TAG="latest" && REPO_ENV="prod" && ENVIRONMENT="prod"; fi
+    - docker stack deploy -c docker-compose.prod.yml ${STACK}
+    - docker service update smartvideo-io_server --force
+    - docker service update smartvideo-io_http --force
+  needs:
+    - build_io
+    - build_http
+
+deploy_dev:
+  <<: *deploy_dtr
+  tags:
+    - fr-dev-deploy
+  environment:
+    name: ${STACK}_dev
+  rules:
+    - if: $UPDATE_CONTENT == 'true'
+      when: on_success
+    - if: $CI_COMMIT_BRANCH =~ /^feature.*$/ || $CI_COMMIT_BRANCH =~ /^bugfix.*$/ || $CI_COMMIT_BRANCH == 'develop'
+      when: manual
+    - if: $CI_COMMIT_TAG != null
+      when: manual
+    - when: manual # Default
+
+deploy_test:
+  <<: *deploy_dtr
+  tags:
+    - dp-rect-deploy
+  environment:
+    name: ${STACK}_test
+  rules:
+    - if: $UPDATE_CONTENT == 'true'
+      when: never
+    - if: $CI_COMMIT_BRANCH =~ /^hotfix.*$/ || $CI_COMMIT_BRANCH == 'uat'|| $CI_COMMIT_BRANCH == 'develop'
+      when: manual
+    - if: $CI_COMMIT_TAG != null
+      when: manual
+    - when: never # Default
+
+deploy_prod:
+  <<: *deploy_dtr
+  tags:
+    - dp-prod-deploy
+  environment:
+    name: ${STACK}_prod
+  rules:
+    - if: $UPDATE_CONTENT == 'true'
+      when: never
+    - if: $CI_COMMIT_BRANCH == 'master'
+      when: manual
+    - if: $CI_COMMIT_TAG != null
+      when: manual
+    - when: never # Default
+
+# CCP DEPLOYMENTS
+.deploy_ccp: &deploy_ccp
+  stage: deployment:ccp
+  tags:
+    - dp-ccp-deploy-dil
+  needs:
+    - prepare:clone
+    - build_http
+    - build_io
+  variables:
+    ENVIRONMENT: dev
+  script:
+    - source ${TOOLKIT_PATH}/config.sh
+    - make -f ${TOOLKIT_PATH}/Makefile deploy PROJECT_NAME=${PROJECT_NAME} ENVIRONMENT_NAME=${ENVIRONMENT}
+
+deploy_branches_ccp:
+  <<: *deploy_ccp
+  environment:
+    name: ccp_dev/${PROJECT_NAME}_${CI_COMMIT_REF_SLUG}
+    url: https://${PROJECT_NAME}-${CI_COMMIT_REF_SLUG}.dp-dev.aareon.com
+  rules:
+    -   if: $CI_COMMIT_BRANCH == 'master' || $CI_COMMIT_BRANCH == 'develop' || $CI_COMMIT_BRANCH == 'uat'
+        when: never
+    -   when: manual  # default
+
+deploy_dev_ccp:
+  <<: *deploy_ccp
+  environment:
+    name: ccp_dev/${PROJECT_NAME}_${CI_COMMIT_REF_SLUG}
+    url: https://${PROJECT_NAME}.dp-dev.aareon.com
+  rules:
+    -   if: $CI_COMMIT_BRANCH == 'develop'
+        when: always
+    -   when: never  # default
+
+# Comment if uat job works fine
+deploy_test_develop_ccp:
+  <<: *deploy_ccp
+  variables:
+    ENVIRONMENT: test
+  environment:
+    name: ccp_test/${PROJECT_NAME}_${CI_COMMIT_REF_SLUG}
+    url: https://${PROJECT_NAME}.dp-test.aareon.com
+  rules:
+    -   if: $CI_COMMIT_BRANCH == 'develop'
+        when: manual
+    -   when: never  # default
+
+deploy_test_uat_ccp:
+  <<: *deploy_ccp
+  variables:
+    ENVIRONMENT: test
+  environment:
+    name: ccp_test/${PROJECT_NAME}_${CI_COMMIT_REF_SLUG}
+    url: https://${PROJECT_NAME}.dp-test.aareon.com
+  rules:
+    -   if: $CI_COMMIT_BRANCH == 'uat'
+        when: manual
+    -   when: never  # default
+
+deploy_prod_ccp:
+  <<: *deploy_ccp
+  variables:
+    ENVIRONMENT: prod
+  environment:
+    name: ccp_prod/${PROJECT_NAME}_${CI_COMMIT_REF_SLUG}
+    url: https://${PROJECT_NAME}.dp-prod.aareon.com
+  rules:
+    -   if: $CI_COMMIT_BRANCH == 'master'
+        when: manual
+    -   when: never  # default
