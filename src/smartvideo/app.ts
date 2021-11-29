@@ -15,9 +15,12 @@ export class SmartVideo {
         this.port = process.env.PORT || SmartVideo.PORT;
         const httpServer = createServer(this.app);
 
-        httpServer.listen(this.port, () => {
+      httpServer.listen(this.port, () => {
             console.log('Running smartvideo-io on port %s', this.port);
-            let io = new Server(httpServer, {});
+            let io = new Server(httpServer, {cors: {
+                origin: "http://localhost:3333",
+                methods: ["GET", "POST"]
+            }});
             const subscriber = new SocketIoSubscriber();
             subscriber.subscribe(io);
         });
