@@ -18,7 +18,7 @@ export class SmartVideo {
       httpServer.listen(this.port, () => {
             console.log('Running smartvideo-io on port %s', this.port);
             let io = new Server(httpServer, {cors: {
-                origin: "https://c2a9-83-32-234-141.ngrok.io",
+                origin: "https://smartvideo-documentation-portal-develop.aswdev.aareon.com",
                 methods: ["GET", "POST"]
             }});
             const subscriber = new SocketIoSubscriber();
