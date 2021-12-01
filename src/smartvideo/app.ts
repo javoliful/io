@@ -19,6 +19,7 @@ export class SmartVideo {
             console.log('Running smartvideo-io on port %s', this.port);
             let io = new Server(httpServer, {cors: {
                 origin: "https://smartvideo-documentation-portal-develop.aswdev.aareon.com",
+                //origin: "http://localhost:8000",
                 methods: ["GET", "POST"]
             }});
             const subscriber = new SocketIoSubscriber();
