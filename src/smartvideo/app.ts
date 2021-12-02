@@ -21,7 +21,7 @@ export class SmartVideo {
             if (req.method === 'OPTIONS') {
 
                 res.header('Access-Control-Allow-Methods', 'PUT, POST, PATCH, DELETE, OPTIONS');
-                res.header('Access-Control-Max-Age', 120);
+                res.header('Access-Control-Max-Age', '120');
                 return res.status(200).json({});
             }
 
