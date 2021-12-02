@@ -17,11 +17,9 @@ export class SmartVideo {
 
       httpServer.listen(this.port, () => {
             console.log('Running smartvideo-io on port %s', this.port);
-            let io = new Server(httpServer, {cors: {
-                origin: "https://smartvideo-documentation.herokuapp.com",
-                //origin: "http://localhost:8000",
-                methods: ["GET", "POST"]
-            }});
+            let io = new Server(httpServer, { cors: {
+    origin: '*',
+  }});
             const subscriber = new SocketIoSubscriber();
             subscriber.subscribe(io);
         });
