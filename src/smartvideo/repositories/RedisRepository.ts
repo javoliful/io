@@ -22,9 +22,9 @@ export class RedisRepository implements RoomRepository {
         //     { no_ready_check: false });
         console.log('redis connecting');
          this.client = this.redis.createClient({
-                host: 'redis-16568.c240.us-east-1-3.ec2.cloud.redislabs.com',
-                port: 16568,
-                password: 'LI4s8XGyAFZHXmokcqK1SstiiBCc5OyK'
+                host: 'redis-10718.c11.us-east-1-3.ec2.cloud.redislabs.com',
+                port: 10718,
+                password: 'viIACiBLmxH5brg9WnAyfQO3YDPafADe'
         }
         );
       
