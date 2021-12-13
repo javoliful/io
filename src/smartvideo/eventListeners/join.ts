@@ -24,8 +24,8 @@ export class JoinRoomListener {
         const userName = metadata && metadata.userName ? metadata.userName : null;
 
         let room = await this.roomsRepository.getRoom(roomId);
-        console.log('Room: ',room )
-        console.log('Room Users: ', room?.users.length )
+        console.log('Room Before: ',room )
+        console.log('Room Users Before: ', room?.users.length )
         if (!room) {
             //  room = new Room(metadata.roomName, userId, [userId]);
             this.socket.emit('error', {"code": "no-room", "description": "This room doesn't exist."});
