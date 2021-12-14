@@ -8,4 +8,6 @@ export interface RoomRepository {
     deleteIfEmpty(roomId: string): Promise<void>;
 
     getRooms(): Map<string, Room>;
+
+    deleteRoom(roomId: string): Promise<void>;
 }

@@ -59,11 +59,22 @@ export class RedisRepository implements RoomRepository {
     public async deleteIfEmpty(roomId: string): Promise<void> {
         const room = await this.getRoom(roomId);
         console.log('Room', room);
-        console.log('Users', room?.users);
+        
         const users = room?.users.length;
         console.log(users + ' in Room: ' + roomId);
         if (room && room.users.length === 0) {
             console.log('Room deleted because is empty: ', roomId);
+            this.client.DEL(roomId);
+        }
+    }
+    public async deleteRoom(roomId: string): Promise<void> {
+        const room = await this.getRoom(roomId);
+        console.log('Room', room);
+      
+        const users = room?.users.length;
+        console.log(users + ' in Room: ' + roomId);
+        if (room) {
+            console.log('Room deleted because is forced: ', roomId);
             this.client.DEL(roomId);
         }
     }
