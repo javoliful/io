@@ -34,7 +34,7 @@ export class JoinRoomListener {
             this.socket.emit('error', {"code": "no-room", "description": "This room doesn't exist."});
         } else {
             const roomName = room.roomName;
-            if (room.users.length >= 5) {
+            if (room.users.length >= 100000000000) {
                 this.socket.emit('error', {"code": "max-participants", "description": "This room full."});
             } else {
 
