@@ -21,8 +21,11 @@ export class JoinRoomListener {
 
     public async handle(roomId: string, userId: string, metadata: any) {
         console.log('Event ', this.event);
+        console.log("roomId:", roomId);
+        console.log("userId:", userId);
+        console.log("metadata:", metadata);
         const userName = metadata && metadata.userName ? metadata.userName : null;
-
+        
         let room = await this.roomsRepository.getRoom(roomId);
         console.log('Room Before: ',room )
         console.log('Room Users Before: ', room?.users.length )
