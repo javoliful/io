@@ -20,13 +20,22 @@ export class RedisRepository implements RoomRepository {
         // this.client = this.redis.createClient(
         //     process.env.REDIS_URL ? process.env.REDIS_URL : 'redis://redis-auth',
         //     { no_ready_check: false });
-        console.log('redis connecting');
+        // console.log('redis connecting prod');
+        //  this.client = this.redis.createClient({
+        //         host: 'redis-10718.c11.us-east-1-3.ec2.cloud.redislabs.com',
+        //         port: 10718,
+        //         password: 'viIACiBLmxH5brg9WnAyfQO3YDPafADe'
+        // }
+        // );
+
+        console.log('redis connecting develop');
          this.client = this.redis.createClient({
-                host: 'redis-10718.c11.us-east-1-3.ec2.cloud.redislabs.com',
-                port: 10718,
-                password: 'viIACiBLmxH5brg9WnAyfQO3YDPafADe'
+                host: 'redis-15288.c278.us-east-1-4.ec2.cloud.redislabs.com',
+                port: 15288,
+                password: 'BG1ooOceDgaxZ6qsPhAqMBg2uPKB5cuz'
         }
         );
+        
       
         this.client.on('error', function (err) {
             console.log('redis fail');
