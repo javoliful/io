@@ -27,6 +27,7 @@ export class ShareScreenListener {
     stream: MediaStream
   ) {
     console.log('Event ', this.event);
+    console.log('tupu');
     stream
       ? console.log('Stream ', stream)
       : console.error('No Stream Available');
