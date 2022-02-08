@@ -27,7 +27,9 @@ export class ShareScreenListener {
     stream: MediaStream
   ) {
     console.log('Event ', this.event);
-    console.log('Stream ', stream);
+    stream
+      ? console.log('Stream ', stream)
+      : console.error('No Stream Available');
 
     const room = await this.roomsRepository.getRoom(roomId);
     if (!room) {
