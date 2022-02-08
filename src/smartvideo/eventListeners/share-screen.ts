@@ -15,13 +15,19 @@ export class ShareScreenListener {
   }
 
   private addListener(): void {
-    this.socket.on(this.event, (roomId, userId, metadata) => {
-      this.handle(roomId, userId, metadata);
+    this.socket.on(this.event, (roomId, userId, metadata, stream) => {
+      this.handle(roomId, userId, metadata, stream);
     });
   }
 
-  public async handle(roomId: string, userId: string, metadata: any) {
+  public async handle(
+    roomId: string,
+    userId: string,
+    metadata: any,
+    stream: MediaStream
+  ) {
     console.log('Event ', this.event);
+    console.log('Stream ', stream);
 
     const room = await this.roomsRepository.getRoom(roomId);
     if (!room) {
@@ -35,7 +41,7 @@ export class ShareScreenListener {
       const { roomName } = room;
       this.socket
         .to(roomId)
-        .emit('sharing-screen', userId, { roomName, userName });
+        .emit('sharing-screen', userId, { roomName, userName }, stream);
     }
   }
 }
