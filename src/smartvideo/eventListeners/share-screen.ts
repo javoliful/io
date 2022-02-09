@@ -15,23 +15,21 @@ export class ShareScreenListener {
   }
 
   private addListener(): void {
-    this.socket.on(this.event, (roomId, userId, metadata, stream) => {
-      this.handle(roomId, userId, metadata, stream);
+    this.socket.on(this.event, (roomId, userId, metadata) => {
+      this.handle(roomId, userId, metadata);
     });
   }
 
   public async handle(
     roomId: string,
     userId: string,
-    metadata: any,
-    stream: MediaStream
+    metadata: any
+    
   ) {
     console.log('Event ', this.event);
-    console.log('tupu');
-    stream
-      ? console.log('Stream ', stream)
-      : console.error('No Stream Available');
+    console.log('tupu sin stream');
 
+ 
     const room = await this.roomsRepository.getRoom(roomId);
     if (!room) {
       //  room = new Room(metadata.roomName, userId, [userId]);
@@ -44,7 +42,7 @@ export class ShareScreenListener {
       const { roomName } = room;
       this.socket
         .to(roomId)
-        .emit('sharing-screen', userId, { roomName, userName }, stream);
+        .emit('sharing-screen', userId, { roomName, userName });
     }
   }
 }
