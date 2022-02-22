@@ -27,7 +27,9 @@ export class ShareScreenListener {
     
   ) {
     console.log('Event ', this.event);
-    console.log('tupu sin stream');
+    console.log('RoomId ', roomId);
+    console.log('UserId ', userId);
+    console.log('Metadata ', metadata);
 
  
     const room = await this.roomsRepository.getRoom(roomId);
